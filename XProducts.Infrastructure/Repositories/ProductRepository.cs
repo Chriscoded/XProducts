@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,33 +12,38 @@ namespace XProducts.Infrastructure.Repositories
 {
     public class ProductRepository : IProductRepository
     {
-        private readonly AppDbContext _ctx;
-        public ProductRepository(AppDbContext ctx) => _ctx = ctx;
+        private readonly AppDbContext _context;
+        public ProductRepository(AppDbContext context) => _context = context;
 
 
         public async Task AddAsync(Product entity, CancellationToken ct = default)
         {
-            await _ctx.Products.AddAsync(entity, ct);
+            await _context.Products.AddAsync(entity, ct);
         }
 
 
-        public async Task<IEnumerable<Product>> GetAllAsync(CancellationToken ct = default) => await _ctx.Products.ToListAsync(ct);
+        public async Task<IEnumerable<Product>> GetAllAsync(CancellationToken ct = default) => await _context.Products.ToListAsync(ct);
 
 
-        public async Task<Product?> GetByIdAsync(Guid id, CancellationToken ct = default) => await _ctx.Products.FindAsync(new object[] { id }, ct);
+        public async Task<Product?> GetByIdAsync(Guid id, CancellationToken ct = default) => await _context.Products.FindAsync(new object[] { id }, ct);
+
+        //public Task<Product?> GetByIdForUpdateAsync(Guid id, CancellationToken ct = default)
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        public void Remove(Product entity) => _context.Products.Remove(entity);
 
 
-        public void Remove(Product entity) => _ctx.Products.Remove(entity);
+        public void Update(Product entity) => _context.Products.Update(entity);
 
 
-        public void Update(Product entity) => _ctx.Products.Update(entity);
-
-
-        // Example of using SELECT ... FOR UPDATE (Postgres) for pessimistic locking if wanted
         public async Task<Product?> GetByIdForUpdateAsync(Guid id, CancellationToken ct = default)
         {
-            // Note: works for relational providers that support FOR UPDATE
-            return await _ctx.Products.FromSqlRaw("SELECT * FROM \"Products\" WHERE \"Id\" = {0} FOR UPDATE", id).AsNoTracking().FirstOrDefaultAsync(ct);
+            // Use EF Core FindAsync to retrieve the product.
+            // EF Core will track the entity, so updates will be saved during SaveChanges.
+            return await _context.Products.FindAsync(new object[] { id }, ct);
         }
+
     }
 }

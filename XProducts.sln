@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XProducts.Infrastructure", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XProducts.API", "XProducts.API\XProducts.API.csproj", "{D1B60CB3-E2CB-4FAE-A744-C8A8B7ABC383}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XProducts.Tests", "XProducts.Tests\XProducts.Tests.csproj", "{C0AA5458-0DE4-46B3-8EE2-E37CD87E4F87}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{D1B60CB3-E2CB-4FAE-A744-C8A8B7ABC383}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D1B60CB3-E2CB-4FAE-A744-C8A8B7ABC383}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D1B60CB3-E2CB-4FAE-A744-C8A8B7ABC383}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0AA5458-0DE4-46B3-8EE2-E37CD87E4F87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0AA5458-0DE4-46B3-8EE2-E37CD87E4F87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0AA5458-0DE4-46B3-8EE2-E37CD87E4F87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0AA5458-0DE4-46B3-8EE2-E37CD87E4F87}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
