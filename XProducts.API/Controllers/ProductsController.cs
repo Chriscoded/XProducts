@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Humanizer;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using XProducts.API.DTOs;
 using XProducts.Core.Entities;
 using XProducts.Core.Interfaces;
-using XProducts.API.DTOs;
 using XProducts.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
+using XProducts.Infrastructure.Repositories;
 
 
 [ApiController]
@@ -12,12 +15,15 @@ public class ProductsController : ControllerBase
 {
     private readonly IProductRepository _repo;
     private readonly AppDbContext _context; // small shortcut for save
+    public readonly IMapper _mapper;
 
 
-    public ProductsController(IProductRepository repo, AppDbContext context)
+    public ProductsController(IProductRepository repo, AppDbContext context, IMapper mapper)
     {
         _repo = repo;
         _context = context;
+        _context = context;
+        _mapper = mapper;
     }
 
 
@@ -30,7 +36,7 @@ public class ProductsController : ControllerBase
     }
 
 
-    [HttpGet("{id}")]
+    [HttpGet("{id}", Name = "GetProductById")]
     public async Task<IActionResult> Get(Guid id)
     {
         var p = await _repo.GetByIdAsync(id);
@@ -40,29 +46,36 @@ public class ProductsController : ControllerBase
 
 
     [HttpPost]
-    public async Task<IActionResult> Create(CreateProductDto input)
+    public async Task<IActionResult> CreateProduct(ProductCreateDto dto)
     {
-        var p = new Product { Id = Guid.NewGuid(), Name = input.Name, Description = input.Description, Price = input.Price, StockQuantity = input.StockQuantity };
-        await _repo.AddAsync(p);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(Get), new { id = p.Id }, new ProductDto(p.Id, p.Name, p.Description, p.Price, p.StockQuantity));
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var product = _mapper.Map<Product>(dto);
+
+        await _repo.AddAsync(product);
+        await _repo.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(Get), new { id = product.Id }, product);
     }
 
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, UpdateProductDto input)
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> UpdateProduct(Guid id, ProductUpdateDto dto)
     {
-        var p = await _repo.GetByIdAsync(id);
-        if (p == null) return NotFound();
-        p.Name = input.Name;
-        p.Description = input.Description;
-        p.Price = input.Price;
-        p.StockQuantity = input.StockQuantity;
-        _repo.Update(p);
-        try { await _context.SaveChangesAsync(); }
-        catch (DbUpdateConcurrencyException) { return Conflict("Concurrency conflict"); }
-        return NoContent();
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var product = await _repo.GetByIdAsync(id);
+        if (product == null) return NotFound();
+
+        _mapper.Map(dto, product); // update existing entity
+
+        await _repo.SaveChangesAsync();
+        return Ok(product);
     }
+
 
 
     [HttpDelete("{id}")]

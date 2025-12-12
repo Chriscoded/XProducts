@@ -25,6 +25,8 @@ builder.Services.AddDbContext<AppDbContext>(opts => opts.UseNpgsql(configuration
 // Add services to the container.
 
 // DI
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 

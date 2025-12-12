@@ -31,8 +31,8 @@ namespace XProducts.Tests
         [Fact]
         public async Task AddAsync_Should_Add_Product()
         {
-            var ctx = CreateDbContext();
-            var repo = new ProductRepository(ctx);
+            var context = CreateDbContext();
+            var repo = new ProductRepository(context);
 
             var product = new Product
             {
@@ -43,20 +43,20 @@ namespace XProducts.Tests
             };
 
             await repo.AddAsync(product);
-            await ctx.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
-            Assert.Equal(1, ctx.Products.Count());
+            Assert.Equal(1, context.Products.Count());
         }
 
         [Fact]
         public async Task GetAllAsync_Should_Return_All_Products()
         {
-            var ctx = CreateDbContext();
-            var repo = new ProductRepository(ctx);
+            var context = CreateDbContext();
+            var repo = new ProductRepository(context);
 
-            ctx.Products.Add(new Product { Id = Guid.NewGuid(), Name = "A", Price = 50, StockQuantity = 10 });
-            ctx.Products.Add(new Product { Id = Guid.NewGuid(), Name = "B", Price = 100, StockQuantity = 20 });
-            await ctx.SaveChangesAsync();
+            context.Products.Add(new Product { Id = Guid.NewGuid(), Name = "A", Price = 50, StockQuantity = 10 });
+            context.Products.Add(new Product { Id = Guid.NewGuid(), Name = "B", Price = 100, StockQuantity = 20 });
+            await context.SaveChangesAsync();
 
             var list = await repo.GetAllAsync();
 
@@ -66,12 +66,12 @@ namespace XProducts.Tests
         [Fact]
         public async Task GetByIdAsync_Should_Return_Correct_Product()
         {
-            var ctx = CreateDbContext();
-            var repo = new ProductRepository(ctx);
+            var context = CreateDbContext();
+            var repo = new ProductRepository(context);
 
             var id = Guid.NewGuid();
-            ctx.Products.Add(new Product { Id = id, Name = "Mouse", Price = 25, StockQuantity = 15 });
-            await ctx.SaveChangesAsync();
+            context.Products.Add(new Product { Id = id, Name = "Mouse", Price = 25, StockQuantity = 15 });
+            await context.SaveChangesAsync();
 
             var p = await repo.GetByIdAsync(id);
 
@@ -82,45 +82,45 @@ namespace XProducts.Tests
         [Fact]
         public async Task Update_Should_Modify_Product()
         {
-            var ctx = CreateDbContext();
-            var repo = new ProductRepository(ctx);
+            var context = CreateDbContext();
+            var repo = new ProductRepository(context);
 
             var product = new Product { Id = Guid.NewGuid(), Name = "Tablet", Price = 300, StockQuantity = 10 };
-            ctx.Products.Add(product);
-            await ctx.SaveChangesAsync();
+            context.Products.Add(product);
+            await context.SaveChangesAsync();
 
             product.Price = 350;
             repo.Update(product);
-            await ctx.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
-            var updated = await ctx.Products.FindAsync(product.Id);
+            var updated = await context.Products.FindAsync(product.Id);
             Assert.Equal(350, updated!.Price);
         }
 
         [Fact]
         public async Task Remove_Should_Delete_Product()
         {
-            var ctx = CreateDbContext();
-            var repo = new ProductRepository(ctx);
+            var context = CreateDbContext();
+            var repo = new ProductRepository(context);
 
             var product = new Product { Id = Guid.NewGuid(), Name = "Laptop", Price = 1000, StockQuantity = 3 };
-            ctx.Products.Add(product);
-            await ctx.SaveChangesAsync();
+            context.Products.Add(product);
+            await context.SaveChangesAsync();
 
             repo.Remove(product);
-            await ctx.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
-            Assert.Empty(ctx.Products);
+            Assert.Empty(context.Products);
         }
 
         [Fact]
         public async Task GetByIdForUpdateAsync_Should_Return_Product_Using_Raw_SQL()
         {
-            var ctx = CreateDbContext();
-            var repo = new ProductRepository(ctx);
+            var context = CreateDbContext();
+            var repo = new ProductRepository(context);
 
             var id = Guid.NewGuid();
-            ctx.Products.Add(new Product
+            context.Products.Add(new Product
             {
                 Id = id,
                 Name = "Camera",
@@ -128,7 +128,7 @@ namespace XProducts.Tests
                 StockQuantity = 7
             });
 
-            await ctx.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
             var result = await repo.GetByIdForUpdateAsync(id);
 

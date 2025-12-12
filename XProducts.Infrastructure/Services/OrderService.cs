@@ -7,14 +7,14 @@ namespace XProducts.Infrastructure.Services
 {
     public class OrderService : IOrderService
     {
-        private readonly AppDbContext _ctx;
+        private readonly AppDbContext _context;
         private readonly IProductRepository _productRepo;
         private const int MaxRetries = 5;
 
 
-        public OrderService(AppDbContext ctx, IProductRepository productRepo)
+        public OrderService(AppDbContext context, IProductRepository productRepo)
         {
-            _ctx = ctx;
+            _context = context;
             _productRepo = productRepo;
         }
         public async Task<Order> PlaceOrderAsync(IEnumerable<(Guid productId, int qty)> items, CancellationToken ct = default)
@@ -26,12 +26,12 @@ namespace XProducts.Infrastructure.Services
             while (true)
             {
                 attempt++;
-                using var tx = await _ctx.Database.BeginTransactionAsync(ct);
+                using var tx = await _context.Database.BeginTransactionAsync(ct);
                 try
                 {
                     // Reload product entities and check stock
                     var productIds = items.Select(i => i.productId).ToList();
-                    var products = await _ctx.Products.Where(p => productIds.Contains(p.Id)).ToListAsync(ct);
+                    var products = await _context.Products.Where(p => productIds.Contains(p.Id)).ToListAsync(ct);
 
 
                     // Ensure all products exist
@@ -53,7 +53,7 @@ namespace XProducts.Infrastructure.Services
                     {
                         var prod = products.Single(p => p.Id == productId);
                         prod.StockQuantity -= qty;
-                        _ctx.Products.Update(prod);
+                        _context.Products.Update(prod);
                     }
 
 
@@ -67,8 +67,8 @@ namespace XProducts.Infrastructure.Services
                     }
 
 
-                    await _ctx.Orders.AddAsync(order, ct);
-                    await _ctx.SaveChangesAsync(ct);
+                    await _context.Orders.AddAsync(order, ct);
+                    await _context.SaveChangesAsync(ct);
 
 
                     await tx.CommitAsync(ct);

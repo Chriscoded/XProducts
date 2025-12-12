@@ -27,10 +27,15 @@ namespace XProducts.Infrastructure.Repositories
 
         public async Task<Product?> GetByIdAsync(Guid id, CancellationToken ct = default) => await _context.Products.FindAsync(new object[] { id }, ct);
 
-        //public Task<Product?> GetByIdForUpdateAsync(Guid id, CancellationToken ct = default)
+        //public async Task AddAsync(Product product)
         //{
-        //    throw new NotImplementedException();
+        //    await _context.Products.AddAsync(product);
         //}
+
+        public async Task<int> SaveChangesAsync()   // IMPLEMENT THIS
+        {
+            return await _context.SaveChangesAsync();
+        }
 
         public void Remove(Product entity) => _context.Products.Remove(entity);
 
