@@ -52,7 +52,7 @@ dotnet ef database update --project XProducts.Infrastructure --startup-project X
 dotnet run --project XProducts.API
 
 
-#Test Endpoints
+## Test Endpoints
 
 Use Postman or any API client to test endpoints:
 
@@ -66,7 +66,7 @@ PUT /api/products/{id} – update a product
 
 POST /api/orders – place an order
 
-#📝 Assumptions
+## 📝 Assumptions
 
 Orders are only valid if all items are in stock; partial orders are rejected.
 
@@ -76,7 +76,7 @@ No authentication or authorization is implemented (assume internal API).
 
 The API supports SQLite (for local development) and PostgreSQL (for production).
 
-🛠 Tech Stack Choices
+## 🛠 Tech Stack Choices
 
 Language: C#
 
@@ -88,11 +88,11 @@ ORM: Entity Framework Core 9
 
 Database: SQLite (development), PostgreSQL (production)
 
-Testing: xUnit, Moq, EF Core In-Memory
+Testing: xUnit, Moq, EF Core PosgreSQL
 
 Mapping: AutoMapper for DTO-to-Entity transformations
 
-#⚡ Important Notes
+## ⚡ Important Notes
 
 OrderService uses retry logic with transactions to handle concurrent orders safely.
 
