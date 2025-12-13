@@ -12,17 +12,8 @@ var env = builder.Environment;
 
 
 // Use Postgres in production, SQLite for dev/testing convenience
-var useSqlite = configuration.GetValue<bool>("UseSqlite", false);
+
 builder.Services.AddDbContext<AppDbContext>(opts => opts.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
-//if (useSqlite)
-//{
-//    builder.Services.AddDbContext<AppDbContext>(opts => opts.UseSqlite(configuration.GetConnectionString("Sqlite")));
-//}
-//else
-//{
-//    builder.Services.AddDbContext<AppDbContext>(opts => opts.UseNpgsql(configuration.GetConnectionString("Postgres")));
-//}
-// Add services to the container.
 
 // DI
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
