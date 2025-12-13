@@ -28,7 +28,7 @@ Create an appsettings.json (or appsettings.Development.json) with the following 
 {
   "ConnectionStrings": {
      "Sqlite": "Data Source=app.db;",
-     "DefaultConnection": "Host=localhost;Port=5432;Database=xproducts_db;Username=postgres;Password=123;"
+     "DefaultConnection": "Host=localhost;Port=5432;Database=xproducts_db;Username=postgres;Password=password;"
    }
 }
 
