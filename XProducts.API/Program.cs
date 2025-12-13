@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using XProducts.Core.Interfaces;
 using XProducts.Core.Services;
 using XProducts.Infrastructure.Data;
+using XProducts.Infrastructure.Persistence;
 using XProducts.Infrastructure.Repositories;
-using XProducts.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +20,9 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

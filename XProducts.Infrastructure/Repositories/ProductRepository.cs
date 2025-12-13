@@ -50,5 +50,13 @@ namespace XProducts.Infrastructure.Repositories
             return await _context.Products.FindAsync(new object[] { id }, ct);
         }
 
+        public async Task<IReadOnlyList<Product>> GetByIdsAsync( IEnumerable<Guid> ids,CancellationToken ct = default)
+        {
+            return await _context.Products
+                .Where(p => ids.Contains(p.Id))
+                .ToListAsync(ct);
+        }
+
+
     }
 }

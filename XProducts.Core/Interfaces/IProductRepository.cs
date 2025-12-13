@@ -10,5 +10,8 @@ namespace XProducts.Core.Interfaces
     public interface IProductRepository : IRepository<Product>
     {
         Task<Product?> GetByIdForUpdateAsync(Guid id, CancellationToken ct = default);
+        Task<IReadOnlyList<Product>> GetByIdsAsync(
+       IEnumerable<Guid> ids,
+       CancellationToken ct = default);
     }
 }

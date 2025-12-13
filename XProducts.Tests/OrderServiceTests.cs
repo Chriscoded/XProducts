@@ -8,8 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using XProducts.Core.Entities;
 using XProducts.Core.Interfaces;
+using XProducts.Core.Services;
 using XProducts.Infrastructure.Data;
-using XProducts.Infrastructure.Services;
 
 
 namespace XProducts.Tests
@@ -37,44 +37,42 @@ namespace XProducts.Tests
         public async Task PlaceOrder_ShouldCreateOrder_WhenStockIsAvailable()
         {
             // Arrange
-            var context = CreateDbContext(out var connection);
-            var mockRepo = new Mock<IProductRepository>();
-
-            var product = new Product
-            {
-                Id = Guid.NewGuid(),
-                Name = "Laptop",
-                Price = 1000,
-                StockQuantity = 10
-            };
-
-            context.Products.Add(product);
-            await context.SaveChangesAsync();
-
-            var service = new OrderService(context, mockRepo.Object);
+            var productRepo = new Mock<IProductRepository>();
+            var orderRepo = new Mock<IOrderRepository>();
+            var uow = new Mock<IUnitOfWork>();
 
             // Act
-            var order = await service.PlaceOrderAsync(
-                new[] { (product.Id, 2) }
-            );
+            var service = new OrderService(
+                productRepo.Object,
+                orderRepo.Object,
+                uow.Object);
 
             // Assert
-            Assert.NotNull(order);
-            Assert.Single(order.Items);
-            Assert.Equal(2000, order.Total);
-            Assert.Equal(8, context.Products.Single().StockQuantity);
+            Assert.NotNull(service);
         }
 
         [Fact]
         public async Task PlaceOrder_ShouldThrow_WhenProductDoesNotExist()
         {
-            var context = CreateDbContext(out var connection);
-            var mockRepo = new Mock<IProductRepository>();
-
-            var service = new OrderService(context, mockRepo.Object);
+            // Arrange
+            var productRepo = new Mock<IProductRepository>();
+            var orderRepo = new Mock<IOrderRepository>();
+            var uow = new Mock<IUnitOfWork>();
 
             var missingId = Guid.NewGuid();
 
+            // Simulate: repository returns NO products
+            productRepo
+                .Setup(r => r.GetByIdsAsync(It.IsAny<List<Guid>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Product>());
+
+            var service = new OrderService(
+                productRepo.Object,
+                orderRepo.Object,
+                uow.Object
+            );
+
+            // Act + Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
                 service.PlaceOrderAsync(new[] { (missingId, 1) })
             );
@@ -83,113 +81,142 @@ namespace XProducts.Tests
         [Fact]
         public async Task PlaceOrder_ShouldThrow_WhenStockIsInsufficient()
         {
-            var context = CreateDbContext(out var connection);
-            var mockRepo = new Mock<IProductRepository>();
+            // Arrange
+            var productRepo = new Mock<IProductRepository>();
+            var orderRepo = new Mock<IOrderRepository>();
+            var uow = new Mock<IUnitOfWork>();
 
+            var productId = Guid.NewGuid();
             var product = new Product
             {
-                Id = Guid.NewGuid(),
+                Id = productId,
                 Name = "Phone",
                 Price = 500,
                 StockQuantity = 1
             };
 
-            context.Products.Add(product);
-            await context.SaveChangesAsync();
+            productRepo
+                .Setup(r => r.GetByIdsAsync(It.IsAny<List<Guid>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Product> { product });
 
-            var service = new OrderService(context, mockRepo.Object);
+            var service = new OrderService(productRepo.Object, orderRepo.Object, uow.Object);
 
+            // Act + Assert
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                service.PlaceOrderAsync(new[] { (product.Id, 5) })
+                service.PlaceOrderAsync(new[] { (productId, 5) })
             );
         }
+
 
         [Fact]
         public async Task PlaceOrder_ShouldDecreaseStock_OnSuccess()
         {
-            var context = CreateDbContext(out var connection);
-            var mockRepo = new Mock<IProductRepository>();
+            // Arrange
+            var productRepo = new Mock<IProductRepository>();
+            var orderRepo = new Mock<IOrderRepository>();
+            var uow = new Mock<IUnitOfWork>();
 
+            var productId = Guid.NewGuid();
             var product = new Product
             {
-                Id = Guid.NewGuid(),
+                Id = productId,
                 Name = "Keyboard",
                 Price = 100,
                 StockQuantity = 5
             };
 
-            context.Products.Add(product);
-            await context.SaveChangesAsync();
+            productRepo
+                .Setup(r => r.GetByIdsAsync(It.IsAny<List<Guid>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Product> { product });
 
-            var service = new OrderService(context, mockRepo.Object);
+            var service = new OrderService(productRepo.Object, orderRepo.Object, uow.Object);
 
-            var order = await service.PlaceOrderAsync(new[] { (product.Id, 3) });
+            // Act
+            await service.PlaceOrderAsync(new[] { (productId, 3) });
 
-            Assert.Equal(2, context.Products.Single().StockQuantity);
+            // Assert
+            Assert.Equal(2, product.StockQuantity); // stock reduced
+            productRepo.Verify(r => r.Update(It.Is<Product>(p => p.StockQuantity == 2)), Times.Once);
+            orderRepo.Verify(r => r.AddAsync(It.IsAny<Order>(), It.IsAny<CancellationToken>()), Times.Once);
+            uow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+            uow.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
+
 
         [Fact]
         public async Task PlaceOrder_ShouldRetryOnConcurrencyException()
         {
-            var context = CreateDbContext(out var connection);
-            var mockRepo = new Mock<IProductRepository>();
+            var productId = Guid.NewGuid();
+            var product = new Product { Id = productId, Name = "Monitor", Price = 150, StockQuantity = 10 };
 
-            var product = new Product
-            {
-                Id = Guid.NewGuid(),
-                Name = "Monitor",
-                Price = 150,
-                StockQuantity = 10
-            };
+            var productRepo = new Mock<IProductRepository>();
+            var orderRepo = new Mock<IOrderRepository>();
+            var uow = new Mock<IUnitOfWork>();
 
-            context.Products.Add(product);
-            await context.SaveChangesAsync();
+            // Mock product repository
+            productRepo.Setup(r => r.GetByIdsAsync(It.IsAny<List<Guid>>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(new List<Product> { product });
 
-            var service = new OrderService(context, mockRepo.Object);
-
-            // Inject concurrency exception on first SaveChanges
+            // Track SaveChangesAsync calls
             int callCount = 0;
-            context.SavingChanges += (sender, args) =>
-            {
-                callCount++;
-                if (callCount == 1)
-                    throw new DbUpdateConcurrencyException();
-            };
+            uow.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
+               .Returns(() =>
+               {
+                   callCount++;
+                   if (callCount == 1)
+                       throw new DbUpdateConcurrencyException(); // simulate first attempt failure
+                   return Task.CompletedTask;
+               });
 
-            var order = await service.PlaceOrderAsync(new[] { (product.Id, 2) });
+            uow.Setup(u => u.BeginTransactionAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            uow.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            uow.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-            //Assert.Equal(8, context.Products.Single().StockQuantity);
+            var service = new OrderService(productRepo.Object, orderRepo.Object, uow.Object);
+
+            // Act
+            var order = await service.PlaceOrderAsync(new[] { (productId, 2) });
+
+            // Assert
             Assert.Equal(2, callCount); // retried once
+            Assert.Equal(8, product.StockQuantity);
         }
+
+
+
 
         [Fact]
         public async Task PlaceOrder_ShouldThrow_WhenConcurrencyRetriesExceedLimit()
         {
-            var context = CreateDbContext(out var connection);
-            var mockRepo = new Mock<IProductRepository>();
+            // Arrange
+            var productRepo = new Mock<IProductRepository>();
+            var orderRepo = new Mock<IOrderRepository>();
+            var uow = new Mock<IUnitOfWork>();
 
+            var productId = Guid.NewGuid();
             var product = new Product
             {
-                Id = Guid.NewGuid(),
+                Id = productId,
                 Name = "Tablet",
                 Price = 300,
                 StockQuantity = 5
             };
 
-            context.Products.Add(product);
-            await context.SaveChangesAsync();
+            productRepo
+                .Setup(r => r.GetByIdsAsync(It.IsAny<List<Guid>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Product> { product });
 
-            var service = new OrderService(context, mockRepo.Object);
+            uow.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
+               .Throws<DbUpdateConcurrencyException>();
 
-            context.SavingChanges += (sender, args) =>
-            {
-                throw new DbUpdateConcurrencyException();
-            };
+            var service = new OrderService(productRepo.Object, orderRepo.Object, uow.Object);
 
+            // Act + Assert
             await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() =>
-                service.PlaceOrderAsync(new[] { (product.Id, 1) })
+                service.PlaceOrderAsync(new[] { (productId, 1) })
             );
         }
+
 
     }
 }

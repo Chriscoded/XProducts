@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using XProducts.Core.Entities;
 
-namespace XProducts.Core.Services
+namespace XProducts.Core.Interfaces
 {
     public interface IOrderService
     {

@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using XProducts.Core.Services;
-
+using XProducts.Core.Interfaces;
 
 [ApiController]
 [Route("api/[controller]")]
