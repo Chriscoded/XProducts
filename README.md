@@ -105,8 +105,3 @@ Ensure PostgreSQL service is running before switching to UseSqlite: false.
 git clone https://github.com/<your-username>/XProducts.git
 cd XProducts
 
-```
-# Set XProducts.API as startup Project
-
-```# Update database
-dotnet ef database update --project XProducts.Infrastructure --startup-project XProducts.API
