@@ -26,15 +26,12 @@ cd XProducts
 Create an appsettings.json (or appsettings.Development.json) with the following keys:
 
 {
-  "UseSqlite": true,
   "ConnectionStrings": {
-    "Sqlite": "Data Source=xproducts.db",
-    "Postgres": "Host=localhost;Database=xproducts_db;Username=postgres;Password=your_password"
-  }
+     "Sqlite": "Data Source=app.db;",
+     "DefaultConnection": "Host=localhost;Port=5432;Database=xproducts_db;Username=postgres;Password=123;"
+   }
 }
 
-
-Set "UseSqlite": false if you want to use PostgreSQL.
 
 Install Dependencies
 
@@ -74,7 +71,9 @@ Product stock is decreased atomically to prevent overselling.
 
 No authentication or authorization is implemented (assume internal API).
 
-The API supports SQLite (for local development) and PostgreSQL (for production).
+The API supports PostgreSQL 
+## Testing 
+I used  SQLite for the orderservices but  PostgreSQL  for productRepository mostly for testing the concurrency
 
 ## 🛠 Tech Stack Choices
 
@@ -106,3 +105,8 @@ Ensure PostgreSQL service is running before switching to UseSqlite: false.
 git clone https://github.com/<your-username>/XProducts.git
 cd XProducts
 
+```
+# Set XProducts.API as startup Project
+
+```# Update database
+dotnet ef database update --project XProducts.Infrastructure --startup-project XProducts.API
